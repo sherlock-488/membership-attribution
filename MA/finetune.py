@@ -6,7 +6,11 @@ from peft import LoraConfig, get_peft_model, PeftConfig, PeftModel
 import transformers
 import sys
 from util import *
-sys.path.append('..')
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(ROOT_DIR)
+
 from model_snapshot import model_dict
 from MADataset import MADataset_FT_FT
 
