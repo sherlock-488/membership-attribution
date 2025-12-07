@@ -4,6 +4,7 @@ import random
 import numpy as np
 import torch
 from torchmetrics.classification import Accuracy
+import sklearn.metrics as sk_metrics
 from util import *
 from transformer_util import *
 
@@ -104,17 +105,39 @@ def main():
             return running_loss / len(training_loader), all_acc
 
         def evaluate_accuracy(dataloader):
+            all_probs = []
+            all_labels = []
             with torch.no_grad():
                 running_loss = 0.0
                 for inputs, labels in dataloader:
                     inputs, labels = inputs.to('cuda'), labels.to('cuda')
                     outputs = model(inputs)
                     loss = loss_fn(outputs, labels)
-                    running_loss += loss
+                    running_loss += loss.item()
                     metric(outputs, labels)
+                    probs = torch.softmax(outputs, dim=-1)
+                    all_probs.append(probs.cpu())
+                    all_labels.append(labels.cpu())
+
                 test_acc = metric.compute().item()
                 metric.reset()
-            return test_acc, running_loss/len(dataloader)
+
+            probs_np = torch.cat(all_probs, dim=0).numpy()
+            y_np = torch.cat(all_labels, dim=0).numpy()
+
+            bit1_true = ((y_np == 0) | (y_np == 1)).astype(int)
+            bit2_true = ((y_np == 0) | (y_np == 2)).astype(int)
+            bit1_score = probs_np[:, 0] + probs_np[:, 1]
+            bit2_score = probs_np[:, 0] + probs_np[:, 2]
+
+            try:
+                auc_bit1 = sk_metrics.roc_auc_score(bit1_true, bit1_score)
+                auc_bit2 = sk_metrics.roc_auc_score(bit2_true, bit2_score)
+                auc_bits = 0.5 * (auc_bit1 + auc_bit2)
+            except ValueError:
+                auc_bits = float("nan")
+
+            return test_acc, running_loss/len(dataloader), auc_bits
 
         attacker_dir = os.path.join(PTFT_SAVE_PATH, "output", shadow_model_name)
         os.makedirs(attacker_dir, exist_ok=True)
@@ -127,11 +150,16 @@ def main():
             model.train()
             train_loss, train_acc = train_one_epoch()
             model.eval()
-            test_acc, test_loss = evaluate_accuracy(test_loader)
+            test_acc, test_loss, test_auc = evaluate_accuracy(test_loader)
             if test_acc >= best_acc:
                 best_acc = test_acc
                 torch.save(model, attacker_model_path)
-            print(f"Epoch:{epoch} loss: {train_loss}, acc:{train_acc} test loss: {test_loss}, test acc: {test_acc}, best acc: {best_acc}")
+            print(
+                f"Epoch:{epoch} "
+                f"loss: {train_loss:.4f}, acc:{train_acc:.4f} "
+                f"test loss: {test_loss:.4f}, test acc: {test_acc:.4f}, "
+                f"test auc(bits): {test_auc:.4f}, best acc: {best_acc:.4f}"
+            )
 
     else:
         # legacy style
