@@ -91,13 +91,13 @@ for MODEL in "${TARGET_MODELS[@]}"; do
 
     echo "[${MODEL}] MA attacker log -> ${MA_LOG}"
 
-    MY_ACC=$(grep "ACC      (4-class)" "${MA_LOG}" | tail -n 1 | awk '{print $NF}')
+    MY_ACC=$(grep "ACC(4-class)" "${MA_LOG}" 2>/dev/null | tail -n 1 | awk '{print $NF}') || true
     if [[ -z "${MY_ACC}" ]]; then
-      echo "[WARN][${MODEL}] 没在 ${MA_LOG} 里解析到 ACC (4-class)，先当成 0.0"
+      echo "[WARN][${MODEL}] 没在 ${MA_LOG} 里解析到 ACC(4-class)，先当成 0.0"
       MY_ACC="0.0"
     fi
 
-    MY_AUC=$(grep "AUC(bit1+bit2)/2 (2 bits) =" "${MA_LOG}" | tail -n 1 | awk '{print $NF}')
+    MY_AUC=$(grep "AUC(bit1+bit2)/2 (2 bits) =" "${MA_LOG}" 2>/dev/null | tail -n 1 | awk '{print $NF}') || true
     if [[ -z "${MY_AUC}" ]]; then
       echo "[WARN][${MODEL}] 没在 ${MA_LOG} 里解析到 macro AUC(bits)，先当成 0.0"
       MY_AUC="0.0"
@@ -131,13 +131,13 @@ for MODEL in "${TARGET_MODELS[@]}"; do
 
       echo "[${MODEL}] cascade ${MI} log -> ${LOG_FILE}"
 
-      CAS_ACC=$(grep "ACC(4-class)" "${LOG_FILE}" | tail -n 1 | awk '{print $NF}')
+      CAS_ACC=$(grep "ACC(4-class)" "${LOG_FILE}" 2>/dev/null | tail -n 1 | awk '{print $NF}') || true
       if [[ -z "${CAS_ACC}" ]]; then
         echo "[WARN][${MODEL}] 没在 ${LOG_FILE} 里解析到 ACC(4-class)，该 MI ACC 记为 0.0"
         CAS_ACC="0.0"
       fi
 
-      CAS_AUC=$(grep "macro AUC(bits)" "${LOG_FILE}" | tail -n 1 | awk '{print $NF}')
+      CAS_AUC=$(grep "macro AUC(bits)" "${LOG_FILE}" 2>/dev/null | tail -n 1 | awk '{print $NF}') || true
       if [[ -z "${CAS_AUC}" ]]; then
         echo "[WARN][${MODEL}] 没在 ${LOG_FILE} 里解析到 macro AUC(bits)，该 MI AUC 记为 0.0"
         CAS_AUC="0.0"
