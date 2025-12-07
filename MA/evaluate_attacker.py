@@ -89,7 +89,7 @@ def eval_ptft():
 
     testset = ptft_shadowDataset(targetfilepath, num_per_class=num_per_class)
     test_loader = torch.utils.data.DataLoader(testset, batch_size=64, shuffle=True)
-    model = torch.load(model_path).to('cuda')
+    model = torch.load(model_path, map_location='cuda', weights_only=False).to('cuda')
     model.eval()
 
     accuracy = Accuracy(task="multiclass", num_classes=4).to('cuda')
