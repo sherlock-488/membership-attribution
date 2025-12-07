@@ -36,7 +36,7 @@ def run_cmd(cmd, capture=False):
 def parse_rec_value_from_output(stdout):
     """
     Parse rec_value=tensor([...]) line from evaluate_attacker output.
-    Returns first three recall values as floats.
+    Returns first three recall values as floats. Accepts both tensor(...) and numpy array style.
     """
     rec_line = None
     for line in stdout.splitlines():
@@ -48,7 +48,8 @@ def parse_rec_value_from_output(stdout):
         print("[WARN] rec_value line not found; cannot parse paper-style MA")
         return None
 
-    match = re.search(r"rec_value=tensor\(\[([0-9eE\.\,\s\-]+)\]\)", rec_line)
+    # match tensor([...]) or array([...])
+    match = re.search(r"rec_value=(?:tensor|array)\(\[([0-9eE\.\,\s\-]+)\]", rec_line)
     if not match:
         print("[WARN] failed to parse rec_value line:", rec_line)
         return None

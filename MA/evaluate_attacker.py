@@ -126,7 +126,11 @@ def eval_ptft():
     auc_value = auc_macro(pred, y_true)
     auc_bits = compute_auc(pred.cpu(), y_true.cpu(), 4)
 
-    print(f'{acc_value=}, {pre_value=}, {rec_value=}, {f1_value=}, {auc_bits=}')
+    # Unified, parse-friendly logs
+    print(f"ACC(4-class) = {float(acc_value):.4f}")
+    print(f"macro F1(4-class) = {float(f1_value):.4f}")
+    print(f"AUC(bit1+bit2)/2 (2 bits) = {float(auc_bits):.4f}")
+    print(f"rec_value={rec_value.cpu().numpy()}")
 
 
 def eval_legacy():
