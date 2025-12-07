@@ -1,0 +1,5 @@
+{
+    "model_name": "pythia-1.4b",
+    "dataset": "pile",
+    "model_mode": "first"
+}
