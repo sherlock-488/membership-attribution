@@ -31,30 +31,35 @@ def probs_to_bit_probs(probs: torch.Tensor, mat) -> torch.Tensor:
     mat = mat.to(probs.device)
     return probs @ mat
 
-def compute_auc(pred, y_test, num_classes):
-    if num_classes == 4:
-        BIT_PROB_MATRIX = torch.tensor(
-            [[1, 0],  # class 0 → bit0=1, bit1=0
-            [1, 1],  # class 1 → bit0=1, bit1=1
-            [0, 1],  # class 2 → bit0=0, bit1=1
-            [0, 0]], # class 3 → bit0=0, bit1=0
-            dtype=torch.float32,
-        )
-    elif num_classes == 3:
-        BIT_PROB_MATRIX= torch.tensor(
-            [[1, 0],  # class 0 → bit0=1, bit1=0
-            [0, 1],  # class 1 → bit0=0, bit1=1
-            [0, 0]], # class 2 → bit0=0, bit1=0
-            dtype=torch.float32,
-        )
-    bit_probs = probs_to_bit_probs(pred, BIT_PROB_MATRIX)
-    bit_labels = BIT_PROB_MATRIX.to(y_test.device)[y_test]  # shape: (N, 2)
-    auroc_bin = AUROC(task="binary")
+def compute_auc(pred: torch.Tensor, y_test: torch.Tensor, num_classes: int) -> float:
 
-    bit0_auc = auroc_bin(bit_probs[:, 0], bit_labels[:, 0].long())
-    bit1_auc = auroc_bin(bit_probs[:, 1], bit_labels[:, 1].long())
-    print(f"bit0 AUC = {bit0_auc:.4f}, bit1 AUC = {bit1_auc:.4f}")
-    return (bit0_auc + bit1_auc) / 2
+    probs_np = pred.detach().cpu().numpy()
+    y_np = y_test.detach().cpu().numpy()
+
+    if num_classes == 4:
+        bit0_true = ((y_np == 0) | (y_np == 1)).astype(int)
+        bit0_score = probs_np[:, 0] + probs_np[:, 1]
+
+        bit1_true = ((y_np == 0) | (y_np == 2)).astype(int)
+        bit1_score = probs_np[:, 0] + probs_np[:, 2]
+
+    elif num_classes == 3:
+        bit0_true = (y_np == 0).astype(int)
+        bit0_score = probs_np[:, 0]
+
+        bit1_true = (y_np == 1).astype(int)
+        bit1_score = probs_np[:, 1]
+    else:
+        raise ValueError(f"compute_auc only supports num_classes in {{3,4}}, got {num_classes}")
+
+    try:
+        auc_bit0 = metrics.roc_auc_score(bit0_true, bit0_score)
+        auc_bit1 = metrics.roc_auc_score(bit1_true, bit1_score)
+        print(f"bit0 AUC = {auc_bit0:.4f}, bit1 AUC = {auc_bit1:.4f}")
+        return 0.5 * (auc_bit0 + auc_bit1)
+    except ValueError:
+        return float("nan")
+
 
 def eval_ptft():
     attack = sys.argv[1]
