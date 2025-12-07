@@ -15,10 +15,13 @@ from pt_ft_util import SAVE_PATH  # noqa: E402
 
 
 def run_cmd(cmd, capture=False):
-    """Run a subprocess; stream output by default."""
+    """Run a subprocess; stream output by default (unbuffered)."""
     print(f"\n[RUN] {' '.join(cmd)}")
+    env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     if capture:
-        res = subprocess.run(cmd, text=True, capture_output=True)
+        res = subprocess.run(cmd, text=True, capture_output=True, env=env)
         if res.stdout:
             print(res.stdout)
         if res.stderr:
@@ -27,7 +30,7 @@ def run_cmd(cmd, capture=False):
             raise RuntimeError(f"Command failed: {' '.join(cmd)}")
         return res.stdout
     else:
-        res = subprocess.run(cmd)
+        res = subprocess.run(cmd, env=env)
         if res.returncode != 0:
             raise RuntimeError(f"Command failed: {' '.join(cmd)}")
         return None
