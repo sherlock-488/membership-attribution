@@ -92,26 +92,28 @@ def eval_ptft():
     model = torch.load(model_path, map_location='cuda', weights_only=False).to('cuda')
     model.eval()
 
-    device = pred.device
-    y_true = y_true.to(device)
+    preds = []
+    y_test = []
+    device = model.device if hasattr(model, "device") else torch.device("cuda")
+    with torch.no_grad():
+        for inputs, labels in test_loader:
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+            outputs = torch.nn.functional.softmax(model(inputs), -1)
+            preds.append(outputs)
+            y_test.append(labels)
+
+    if not preds:
+        raise RuntimeError("No predictions were generated; check dataloader.")
+
+    pred = torch.concat(preds)
+    y_true = torch.concat(y_test)
 
     accuracy = Accuracy(task="multiclass", num_classes=4).to(device)
     precision = Precision(task="multiclass", average='none', num_classes=4).to(device)
     recall = Recall(task="multiclass", average='none', num_classes=4).to(device)
     f1 = F1Score(task="multiclass", average='macro', num_classes=4).to(device)
     auc_macro = AUROC(task="multiclass", average='macro', num_classes=4).to(device)
-
-    preds = []
-    y_test = []
-    with torch.no_grad():
-        for inputs, labels in test_loader:
-            inputs = inputs.to('cuda')
-            outputs = torch.nn.functional.softmax(model(inputs), -1)
-            preds.append(outputs.cpu())
-            y_test.append(labels)
-
-    pred = torch.concat(preds)
-    y_true = torch.concat(y_test)
 
     acc_value = accuracy(pred, y_true)
     pre_value = precision(pred, y_true)
