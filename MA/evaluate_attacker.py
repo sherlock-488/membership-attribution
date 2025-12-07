@@ -94,7 +94,11 @@ def eval_ptft():
 
     preds = []
     y_test = []
-    device = model.device if hasattr(model, "device") else torch.device("cuda")
+    try:
+        device = next(model.parameters()).device
+    except StopIteration:
+        device = torch.device("cuda")
+
     with torch.no_grad():
         for inputs, labels in test_loader:
             inputs = inputs.to(device)
