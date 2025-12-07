@@ -1,5 +1,6 @@
 import os
 import torch
+import torch.nn as nn
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 from peft import LoraConfig, get_peft_model, PeftConfig, PeftModel
 import transformers
@@ -11,7 +12,7 @@ from MADataset import MADataset_FT_FT
 
 # Optional pt_ft datasets
 try:
-from pt_ft_util import load_train_data as ptft_load_train_data, SAVE_PATH as PTFT_SAVE_PATH
+    from pt_ft_util import load_train_data as ptft_load_train_data, SAVE_PATH as PTFT_SAVE_PATH
 except ImportError:
     ptft_load_train_data = None
     PTFT_SAVE_PATH = SAVE_WEIGHTS_PATH
