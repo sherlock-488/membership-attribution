@@ -5,7 +5,10 @@ import sklearn.metrics as metrics
 import torch
 from torchmetrics import Accuracy, Precision, Recall, F1Score, AUROC
 from util import *
-sys.path.append('..')
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+sys.path.append(ROOT_DIR)
 from model_snapshot import model_dict
 
 # pt_ft imports
