@@ -92,11 +92,14 @@ def eval_ptft():
     model = torch.load(model_path, map_location='cuda', weights_only=False).to('cuda')
     model.eval()
 
-    accuracy = Accuracy(task="multiclass", num_classes=4).to('cuda')
-    precision = Precision(task="multiclass", average='none', num_classes=4).to('cuda')
-    recall = Recall(task="multiclass", average='none', num_classes=4).to('cuda')
-    f1 = F1Score(task="multiclass", average='macro', num_classes=4).to('cuda')
-    auc_macro = AUROC(task="multiclass", average='macro', num_classes=4).to('cuda')
+    device = pred.device
+    y_true = y_true.to(device)
+
+    accuracy = Accuracy(task="multiclass", num_classes=4).to(device)
+    precision = Precision(task="multiclass", average='none', num_classes=4).to(device)
+    recall = Recall(task="multiclass", average='none', num_classes=4).to(device)
+    f1 = F1Score(task="multiclass", average='macro', num_classes=4).to(device)
+    auc_macro = AUROC(task="multiclass", average='macro', num_classes=4).to(device)
 
     preds = []
     y_test = []
@@ -115,7 +118,7 @@ def eval_ptft():
     rec_value = recall(pred, y_true)
     f1_value = f1(pred, y_true)
     auc_value = auc_macro(pred, y_true)
-    auc_bits = compute_auc(pred, y_true, 4)
+    auc_bits = compute_auc(pred.cpu(), y_true.cpu(), 4)
 
     print(f'{acc_value=}, {pre_value=}, {rec_value=}, {f1_value=}, {auc_bits=}')
 
