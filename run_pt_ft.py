@@ -48,16 +48,12 @@ def parse_rec_value_from_output(stdout):
         print("[WARN] rec_value line not found; cannot parse paper-style MA")
         return None
 
-    # match tensor([...]) / array([...]) / plain rec_value=[...]
-    match = re.search(r"rec_value=(?:tensor|array)\(\[([0-9eE\.\,\s\-]+)\]", rec_line)
-    if not match:
-        match = re.search(r"rec_value=\[([0-9eE\.\,\s\-]+)\]", rec_line)
-    if not match:
+    # Extract all floats from the line to be robust to spaces/commas
+    nums = re.findall(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?", rec_line)
+    if len(nums) < 3:
         print("[WARN] failed to parse rec_value line:", rec_line)
         return None
-
-    nums_str = match.group(1)
-    nums = [float(x.strip()) for x in nums_str.split(",") if x.strip()]
+    nums = [float(x) for x in nums[:3]]
     if len(nums) < 3:
         print("[WARN] rec_value has fewer than 3 elements:", nums)
         return None
