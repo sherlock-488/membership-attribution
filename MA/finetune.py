@@ -66,8 +66,14 @@ def run_ptft_branch():
                     fallback.add(name.split(".")[-1])
             targets = sorted(fallback)
         if not targets:
-            raise RuntimeError("LoRA 目标层自动识别失败，请手动指定")
+            raise RuntimeError("LoRA target modules auto-detection failed; please specify manually")
         return sorted(set(targets))
+
+    def print_trainable_parameters(model):
+        trainable = sum(p.numel() for _, p in model.named_parameters() if p.requires_grad)
+        total = sum(p.numel() for _, p in model.named_parameters())
+        pct = 100 * trainable / total if total else 0
+        print(f"[LoRA] trainable params: {trainable} / {total} ({pct:.4f}%)")
 
     if ptft_load_train_data is None:
         raise ImportError("pt_ft_util not available for pt_ft dataset finetune")
@@ -78,11 +84,13 @@ def run_ptft_branch():
     tok.pad_token = tok.eos_token
 
     lora_targets = guess_lora_target_modules(base_model)
+    print(f"[LoRA] target_modules = {lora_targets}")
     lora_cfg = LoraConfig(
         r=16, lora_alpha=32, lora_dropout=0.05, bias="none",
         task_type="CAUSAL_LM", target_modules=lora_targets
     )
     base_model = get_peft_model(base_model, lora_cfg)
+    print_trainable_parameters(base_model)
 
     save_path_second_local = PTFT_SAVE_PATH + f'weights/{model_name}/{dataname}_{training_mode}_second'
     data = ptft_load_train_data(dataname, training_mode, training_stage='second')

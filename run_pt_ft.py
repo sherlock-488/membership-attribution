@@ -208,26 +208,13 @@ def main():
             str(seed),
         ], capture=True)
 
-        rec_tuple = parse_rec_value_from_output(eval_stdout)
-        if rec_tuple is not None:
-            r0, r1, r2 = rec_tuple
-            print("\n===== Paper-style MA (per-owner recall) =====")
-            print("MA {:.2f}% {:.2f}% {:.2f}%".format(r0 * 100.0, r1 * 100.0, r2 * 100.0))
-        else:
-            print("\n[WARN] cannot parse paper-style MA; please check evaluate output")
-
+        # Append raw output to summary
         with open(summary_path, "a", encoding="utf-8") as f:
             f.write(
                 f"===== dataname={args.dataname}, model={args.model}, shadow_model={args.shadow_model}, "
                 f"attack={args.attack}, seed={seed} =====\n"
             )
             f.write(eval_stdout)
-            if rec_tuple is not None:
-                f.write(
-                    "\nParsed MA: {:.2f}% {:.2f}% {:.2f}%\n".format(
-                        r0 * 100.0, r1 * 100.0, r2 * 100.0
-                    )
-                )
             f.write("\n\n")
 
 
